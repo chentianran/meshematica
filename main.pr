@@ -1,0 +1,23 @@
+# Introduction
+
+**Meshematica** is a Principia package designed to empower mathematics researchers, educators, and students to render 3D visualization.
+
+# Implementation
+
+Use the Blender backend from [@Fundamenta].
+Use the setup from [@Meshematica].
+
+Map polytope to the Python class `Polytope`.
+Map cylinder to the Python class `Cylinder`.
+Map orbital rig to the Python class `OrbitalRig`.
+Map scale to the Python property `scale` for orbital rig.
+
+Map desk to the Python class `Table`.
+Map material to the Python property `material` for desk.
+
+Map arrow to the Python class `Arrow`.
+
+Map white material to the Python class `WhiteMaterial`.
+Map polished steel material to the Python class `PolishedSteelMaterial`.
+
+Map draft engine to the Python class `draft_engine`.
