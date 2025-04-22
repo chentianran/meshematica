@@ -1,4 +1,5 @@
 import bpy
+import os
 from .shapes import BlenderObject
 
 class Table(BlenderObject):
@@ -13,7 +14,8 @@ class Table(BlenderObject):
         self.obj = bpy.context.object
         self.obj.name = self.name
         self.obj.location.z = self._z
-        self.obj.cycles.is_shadow_catcher = True
+        self.obj.cycles.is_shadow_catcher = True    # old setting, may not be needed for Blender 2.8+
+        self.obj.is_shadow_catcher = True           # the new approach
 
     @property
     def z(self):
@@ -27,43 +29,45 @@ class Table(BlenderObject):
 
     # The delete method can be removed as it's now inherited from BlenderObject
 
-
-# world = bpy.context.scene.world
-# world.use_nodes = True
-# tree = world.node_tree
-# tree.nodes.clear()
-
-# out = tree.nodes.new(type='ShaderNodeOutputWorld')
-
-# bg1 = tree.nodes.new(type='ShaderNodeBackground')
-# bg1.inputs[0].default_value = (0, 0, 0, 1)          # world color
-
-# bg2 = tree.nodes.new(type='ShaderNodeBackground')   
-# bg2.inputs[0].default_value = (1, 1, 1, 1)          # pure white
-
-# mix = tree.nodes.new(type='ShaderNodeMixShader')
-
-# lp1 = tree.nodes.new(type='ShaderNodeLightPath')
-
-# tree.links.new(bg1.outputs[0], mix.inputs[1])
-# tree.links.new(bg2.outputs[0], mix.inputs[2])
-
-# tree.links.new(lp1.outputs[0], mix.inputs[0])
-# tree.links.new(mix.outputs[0], out.inputs[0])
-
-####
 world = bpy.context.scene.world
 world.use_nodes = True
 tree = world.node_tree
 tree.nodes.clear()
 
-# Create Background and Output nodes
+# Create nodes
 background = tree.nodes.new(type='ShaderNodeBackground')
+environment_texture = tree.nodes.new(type='ShaderNodeTexEnvironment')
+mix = tree.nodes.new(type='ShaderNodeMixShader')
+lightpath = tree.nodes.new(type='ShaderNodeLightPath')
 output = tree.nodes.new(type='ShaderNodeOutputWorld')
 
-# Set pure white color and strength
-background.inputs['Color'].default_value = (1, 1, 1, 1)
-background.inputs['Strength'].default_value = 1.0  # Adjust strength as needed
+current_dir = os.path.dirname(os.path.abspath(__file__))
+hdri_path = os.path.join(current_dir, "hdri", "sunflowers_puresky_4k.exr")
 
-# Link Background to Output
-tree.links.new(background.outputs['Background'], output.inputs['Surface'])
+# Load HDRI image
+# Replace this path with the actual path to your HDRI file
+environment_texture.image = bpy.data.images.load(hdri_path, check_existing=True)
+
+# Configure nodes
+background.inputs['Color'].default_value = (1, 1, 1, 1)  # Pure white background
+background.inputs['Strength'].default_value = 1.0
+
+environment_texture.image.colorspace_settings.name = 'Linear Rec.709'  # Set proper color space
+
+lightpath.location = (-300, 200)
+environment_texture.location = (-300, 0)
+background.location = (-300, -200)
+mix.location = (0, 0)
+output.location = (300, 0)
+
+# Connect nodes
+tree.links.new(lightpath.outputs['Is Camera Ray'], mix.inputs[0])
+tree.links.new(environment_texture.outputs['Color'], mix.inputs[1])  # HDRI for reflections
+tree.links.new(background.outputs[0], mix.inputs[2])  # White background visible to camera
+
+tree.links.new(mix.outputs[0], output.inputs['Surface'])
+
+scene = bpy.context.scene
+scene.view_settings.view_transform = 'Standard'
+scene.view_settings.look = 'None'
+scene.display_settings.display_device = 'sRGB'
