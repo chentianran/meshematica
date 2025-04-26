@@ -5,7 +5,6 @@
 # Implementation
 
 Use the Blender backend from [@Fundamenta].
-Use the setup from [@Meshematica].
 
 Map polytope to the Python class `Polytope`.
 Map cylinder to the Python class `Cylinder`.
